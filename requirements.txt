@@ -2,3 +2,4 @@ fastapi[all]
 sqlalchemy
 pydantic
 uvicorn
+strawberry-graphql[cli]
