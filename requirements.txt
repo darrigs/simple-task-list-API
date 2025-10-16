@@ -3,3 +3,8 @@ sqlalchemy
 pydantic
 uvicorn
 strawberry-graphql[cli]
+pytest
+httpx
+alembic
+psycopg2-binary
+python-dotenv

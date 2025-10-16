@@ -1,12 +1,19 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from app.models import Task, row_to_task
 
 DB_PATH = "tasks.db"
 
+# Register adapter and converter for TIMESTAMP
+sqlite3.register_adapter(datetime, lambda dt: dt.isoformat(" "))
+sqlite3.register_converter("TIMESTAMP", lambda s: datetime.fromisoformat(s.decode()))
+
 def get_connection():
-    return sqlite3.connect(DB_PATH, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+    return sqlite3.connect(
+        DB_PATH,
+        detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
+    )
 
 def init_db():
     try:
@@ -24,8 +31,8 @@ def init_db():
     except Exception as e:
         print(f"Database initialization failed: {e}")
 
-def add_task_to_db(title: str) -> Task:
-    now = datetime.utcnow()
+def add_task_to_db(title: str):
+    now = datetime.now(timezone.utc)
     try:
         with get_connection() as conn:
             cursor = conn.cursor()
@@ -34,37 +41,37 @@ def add_task_to_db(title: str) -> Task:
                 (title, now, now)
             )
             conn.commit()
-            return get_task_by_id(cursor.lastrowid)
+            cursor.execute("SELECT * FROM tasks WHERE id = ?", (cursor.lastrowid,))
+            return cursor.fetchone()
     except Exception as e:
         print(f"Error inserting task: {e}")
         return None
 
-def get_all_tasks(search: Optional[str] = None) -> List[Task]:
+def get_all_tasks(search: Optional[str] = None):
     try:
         with get_connection() as conn:
             cursor = conn.cursor()
             if search:
-                cursor.execute("SELECT * FROM tasks WHERE title LIKE ? ORDER BY created_at DESC", (f"%{search}%",))
+                cursor.execute("SELECT * FROM tasks WHERE title LIKE ?", (f"%{search}%",))
             else:
                 cursor.execute("SELECT * FROM tasks ORDER BY created_at DESC")
-            return [row_to_task(row) for row in cursor.fetchall()]
+            return cursor.fetchall()
     except Exception as e:
         print(f"Error fetching tasks: {e}")
         return []
 
-def get_task_by_id(task_id: int) -> Optional[Task]:
+def get_task_by_id(task_id: int):
     try:
         with get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
-            row = cursor.fetchone()
-            return row_to_task(row) if row else None
+            return cursor.fetchone()
     except Exception as e:
         print(f"Error fetching task by id: {e}")
         return None
 
-def toggle_task_status(task_id: int) -> Optional[Task]:
-    now = datetime.utcnow()
+def toggle_task_status(task_id: int):
+    now = datetime.now(timezone.utc)
     try:
         with get_connection() as conn:
             cursor = conn.cursor()
@@ -78,20 +85,21 @@ def toggle_task_status(task_id: int) -> Optional[Task]:
                 (new_completed, now, task_id)
             )
             conn.commit()
-            return get_task_by_id(task_id)
+            cursor.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
+            return cursor.fetchone()
     except Exception as e:
         print(f"Error toggling task: {e}")
         return None
 
-def delete_task_from_db(task_id: int) -> Optional[Task]:
+def delete_task_from_db(task_id: int):
     try:
-        task = get_task_by_id(task_id)
-        if not task:
+        task_row = get_task_by_id(task_id)
+        if not task_row:
             return None
         with get_connection() as conn:
             conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
             conn.commit()
-        return task
+        return task_row
     except Exception as e:
         print(f"Error deleting task: {e}")
         return None

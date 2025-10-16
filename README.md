@@ -51,6 +51,27 @@ This is a simple FastAPI application using Strawberry GraphQL and SQLite for a t
 
 ---
 
+## Running Tests
+
+1. **Ensure your virtual environment is activated:**
+    ```bash
+    source myenv/bin/activate
+    ```
+
+2. **Install test dependencies (if not already installed):**
+    ```bash
+    pip install pytest httpx pytest-asyncio
+    ```
+
+3. **Run the tests from the project root:**
+    ```bash
+    pytest
+    ```
+
+Test files are located in the `tests/` directory and will automatically be discovered by `pytest`.
+
+---
+
 ## GraphQL API
 
 ### Main Operations
@@ -131,9 +152,3 @@ def add_task(self, title: str) -> Optional[Task]:
 
 - Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
-
----
-
-## License
-
-MIT
