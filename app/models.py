@@ -1,12 +1,13 @@
 import strawberry
+from datetime import datetime
 
 @strawberry.type
 class Task:
     id: int
     title: str
     completed: bool
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
 def row_to_task(row) -> Task:
     return Task(

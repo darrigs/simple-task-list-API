@@ -1,18 +1,28 @@
 import strawberry
 from typing import Optional
 from app.models import Task
-from app.database import add_task_to_db, toggle_task_status, delete_task_from_db
+from app.database import insert_task, update_task_toggle, delete_task
+from app.queries import row_to_task
 
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    def add_task(self, title: str) -> Task:
-        return add_task_to_db(title)
+    def add_task(self, title: str) -> Optional[Task]:
+        row = insert_task(title)
+        if not row:
+            return None
+        return row_to_task(row)
 
     @strawberry.mutation
     def toggle_task(self, id: int) -> Optional[Task]:
-        return toggle_task_status(id)
+        row = update_task_toggle(id)
+        if not row:
+            return None
+        return row_to_task(row)
 
     @strawberry.mutation
     def delete_task(self, id: int) -> Optional[Task]:
-        return delete_task_from_db(id)
+        row = delete_task(id)
+        if not row:
+            return None
+        return row_to_task(row)
